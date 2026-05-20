@@ -8,11 +8,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.financeapp.ui.screens.auth.AuthViewModel
 import com.example.financeapp.ui.screens.auth.LoginScreen
 import com.example.financeapp.ui.screens.auth.RegisterScreen
 
@@ -23,14 +21,17 @@ sealed class Screen(val route: String) {
     object Income : Screen("income")
     object Expense : Screen("expense")
     object Goal : Screen("goal")
-    object GoalForm : Screen("goal_form")
+    object GoalForm : Screen("goal_form?goalId={goalId}") {
+        fun createRoute(goalId: String = ""): String {
+            return "goal_form?goalId=$goalId"
+        }
+    }
     object History : Screen("history")
 }
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val authViewModel: AuthViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -38,7 +39,6 @@ fun AppNavigation() {
     ) {
         composable(Screen.Login.route) {
             LoginScreen(
-                viewModel = authViewModel,
                 onLoginSuccess = {
                     navController.navigate(Screen.Dashboard.route) {
                         popUpTo(Screen.Login.route) {
@@ -46,7 +46,7 @@ fun AppNavigation() {
                         }
                     }
                 },
-                onNavigateToRegister = {
+                onCreateAccountClick = {
                     navController.navigate(Screen.Register.route)
                 }
             )
@@ -54,7 +54,6 @@ fun AppNavigation() {
 
         composable(Screen.Register.route) {
             RegisterScreen(
-                viewModel = authViewModel,
                 onRegisterSuccess = {
                     navController.navigate(Screen.Dashboard.route) {
                         popUpTo(Screen.Login.route) {
@@ -62,7 +61,7 @@ fun AppNavigation() {
                         }
                     }
                 },
-                onNavigateToLogin = {
+                onLoginClick = {
                     navController.popBackStack()
                 }
             )
