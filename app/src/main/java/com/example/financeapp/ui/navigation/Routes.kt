@@ -1,4 +1,4 @@
-package com.example.financeapp.navigation
+package com.example.financeapp.ui.navigation
 
 object Routes {
     const val LOGIN = "login"

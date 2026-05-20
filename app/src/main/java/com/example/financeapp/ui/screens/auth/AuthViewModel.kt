@@ -1,4 +1,4 @@
-package com.example.financeapp.ui.auth
+package com.example.financeapp.ui.screens.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

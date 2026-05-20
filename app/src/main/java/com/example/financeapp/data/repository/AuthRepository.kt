@@ -7,57 +7,56 @@ import kotlinx.coroutines.tasks.await
 
 class AuthRepository {
 
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val firebaseAuth = FirebaseAuth.getInstance()
+    private val firestore = FirebaseFirestore.getInstance()
 
-    fun getCurrentUserId(): String? {
-        return auth.currentUser?.uid
-    }
-
-    fun isUserLoggedIn(): Boolean {
-        return auth.currentUser != null
+    suspend fun loginUser(
+        email: String,
+        password: String
+    ): Boolean {
+        return try {
+            firebaseAuth.signInWithEmailAndPassword(email, password).await()
+            true
+        } catch (exception: Exception) {
+            false
+        }
     }
 
     suspend fun registerUser(
         name: String,
         email: String,
         password: String
-    ): Result<Unit> {
+    ): Boolean {
         return try {
-            val authResult = auth.createUserWithEmailAndPassword(email, password).await()
-            val userId = authResult.user?.uid ?: return Result.failure(Exception("User ID not found"))
+            val authResult = firebaseAuth
+                .createUserWithEmailAndPassword(email, password)
+                .await()
+
+            val userId = authResult.user?.uid ?: return false
 
             val user = User(
                 userId = userId,
                 name = name,
-                email = email,
-                baseCurrency = "LKR"
+                email = email
             )
 
-            firestore.collection("users")
+            firestore
+                .collection("users")
                 .document(userId)
                 .set(user)
                 .await()
 
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+            true
+        } catch (exception: Exception) {
+            false
         }
     }
 
-    suspend fun loginUser(
-        email: String,
-        password: String
-    ): Result<Unit> {
-        return try {
-            auth.signInWithEmailAndPassword(email, password).await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+    fun getCurrentUserId(): String? {
+        return firebaseAuth.currentUser?.uid
     }
 
     fun logoutUser() {
-        auth.signOut()
+        firebaseAuth.signOut()
     }
 }
