@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
@@ -91,50 +89,38 @@ fun IncomeScreen(
         ScreenContainer(
             maxWidth = 560.dp
         ) {
-            LazyColumn(
+            Column(
                 modifier = Modifier.padding(innerPadding),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                item {
-                    ScreenTitleWithIcon()
-                }
+                ScreenTitleWithIcon()
 
-                item {
-                    AddIncomeCard(
-                        uiState = uiState,
-                        viewModel = viewModel,
-                        onSaveClick = {
-                            focusManager.clearFocus()
-                            viewModel.onSaveIncomeClick()
-                        }
-                    )
-                }
+                AddIncomeCard(
+                    uiState = uiState,
+                    viewModel = viewModel,
+                    onSaveClick = {
+                        focusManager.clearFocus()
+                        viewModel.onSaveIncomeClick()
+                    }
+                )
 
-                item {
-                    IncomeSummaryCard(
-                        incomeList = uiState.incomeList
-                    )
-                }
+                IncomeSummaryCard(
+                    incomeList = uiState.incomeList
+                )
 
-                item {
-                    SectionTitle(text = "Saved Income Records")
-                }
+                SectionTitle(text = "Saved Income Records")
 
                 if (uiState.isLoading) {
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator()
                     }
                 } else if (uiState.incomeList.isEmpty()) {
-                    item {
-                        EmptyIncomeCard()
-                    }
+                    EmptyIncomeCard()
                 } else {
-                    items(uiState.incomeList) { income ->
+                    uiState.incomeList.forEach { income ->
                         IncomeRecordCard(
                             income = income,
                             onDeleteClick = {
@@ -144,9 +130,7 @@ fun IncomeScreen(
                     }
                 }
 
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
@@ -464,7 +448,10 @@ private fun CurrencyDropdownField(
                 )
             },
             modifier = Modifier
-                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = true)
+                .menuAnchor(
+                    type = MenuAnchorType.PrimaryNotEditable,
+                    enabled = true
+                )
                 .fillMaxWidth(),
             singleLine = true
         )
