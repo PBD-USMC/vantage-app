@@ -13,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.financeapp.ui.screens.auth.LoginScreen
 import com.example.financeapp.ui.screens.auth.RegisterScreen
+import com.example.financeapp.ui.screens.income.IncomeScreen
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -85,7 +86,7 @@ fun AppNavigation() {
         }
 
         composable(Screen.Income.route) {
-            TemporaryScreen(title = "Income Screen")
+            IncomeScreen()
         }
 
         composable(Screen.Expense.route) {
