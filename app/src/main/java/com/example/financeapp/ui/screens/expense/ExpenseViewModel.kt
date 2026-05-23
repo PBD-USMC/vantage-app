@@ -42,4 +42,70 @@ class ExpenseViewModel : ViewModel() {
         "Committed"
     )
 
-}
+    fun onAmountChange(newValue: String) {
+            _uiState.update {
+                it.copy(
+                    amount = newValue,
+                    amountError = false,
+                    isSavedSuccessfully = false,
+                    errorMessage = ""
+                )
+            }
+    }
+
+    fun onCategorySelected(category: String) {
+        _uiState.update {
+            it.copy(
+                selectedCategory = category,
+                isSavedSuccessfully = false,
+                errorMessage = ""
+            )
+        }
+    }
+
+    fun onPaymentMethodSelected(paymentMethod: String) {
+        _uiState.update {
+            it.copy(
+                selectedPaymentMethod = paymentMethod,
+                isSavedSuccessfully = false,
+                errorMessage = ""
+            )
+        }
+    }
+
+    fun onExpenseTypeSelected(expenseType: String) {
+        _uiState.update {
+            it.copy(
+                selectedExpenseType = expenseType,
+                isSavedSuccessfully = false,
+                errorMessage = ""
+            )
+        }
+    }
+
+    fun onDateChange(newValue: String) {
+        _uiState.update {
+            it.copy(
+                date = newValue,
+                isSavedSuccessfully = false,
+                errorMessage = ""
+            )
+        }
+    }
+
+    fun onNoteChange(newValue: String) {
+        val limit = _uiState.value.noteLimit
+
+        if (newValue.length <= limit) {
+            _uiState.update {
+                it.copy(
+                    note = newValue,
+                    isSavedSuccessfully = false,
+                    errorMessage = ""
+                )
+            }
+        }
+    }
+
+
+    }
