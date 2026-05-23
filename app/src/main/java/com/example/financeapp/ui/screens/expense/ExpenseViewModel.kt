@@ -134,6 +134,42 @@ class ExpenseViewModel : ViewModel() {
             note = currentState.note.trim(),
             createdAt = Timestamp.now()
         )
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = "",
+                    isSavedSuccessfully = false
+                )
+            }
+
+            val saveResult = financeRepository.addExpenseToFirestore(expense)
+
+            if (saveResult) {
+                _uiState.update {
+                    it.copy(
+                        amount = "",
+                        amountError = false,
+                        note = "",
+                        isLoading = false,
+                        isSavedSuccessfully = true,
+                        errorMessage = ""
+                    )
+                }
+
+                loadExpenses()
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isSavedSuccessfully = false,
+                        errorMessage = "Failed to save expense. Please check your connection and try again."
+                    )
+                }
+            }
+        }
+
     }
 
 

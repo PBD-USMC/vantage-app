@@ -80,4 +80,8 @@ class FinanceRepository {
     fun getExpensesFromFirestore(): List<Expense> {
         return emptyList()
     }
+
+    fun addExpenseToFirestore(expense: Expense): Boolean {
+        return true
+    }
 }
