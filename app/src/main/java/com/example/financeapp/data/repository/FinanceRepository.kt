@@ -1,5 +1,6 @@
 package com.example.financeapp.data.repository
 
+import com.example.financeapp.data.model.Expense
 import com.example.financeapp.data.model.Income
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -67,6 +68,68 @@ class FinanceRepository {
                 .document(userId)
                 .collection("incomes")
                 .document(incomeId)
+                .delete()
+                .await()
+
+            true
+        } catch (exception: Exception) {
+            false
+        }
+    }
+
+    suspend fun getExpensesFromFirestore(): List<Expense> {
+        return try {
+            val userId = getCurrentUserId() ?: return emptyList()
+
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("expenses")
+                .get()
+                .await()
+                .toObjects(Expense::class.java)
+        } catch (exception: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun addExpenseToFirestore(expense: Expense): Boolean {
+        return try {
+            val userId = getCurrentUserId() ?: return false
+
+            val expenseDocument = firestore
+                .collection("users")
+                .document(userId)
+                .collection("expenses")
+                .document()
+
+            val expenseWithId = expense.copy(
+                expenseId = expenseDocument.id
+            )
+
+            expenseDocument
+                .set(expenseWithId)
+                .await()
+
+            true
+        } catch (exception: Exception) {
+            false
+        }
+    }
+
+    suspend fun deleteExpenseFromFirestore(expenseId: String): Boolean {
+        return try {
+            val userId = getCurrentUserId() ?: return false
+
+            if (expenseId.isBlank()) {
+                return false
+            }
+
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("expenses")
+                .document(expenseId)
                 .delete()
                 .await()
 
