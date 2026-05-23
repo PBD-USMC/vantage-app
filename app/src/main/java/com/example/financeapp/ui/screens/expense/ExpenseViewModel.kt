@@ -107,5 +107,26 @@ class ExpenseViewModel : ViewModel() {
         }
     }
 
+    fun loadExpenses() {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = ""
+                )
+            }
 
+            val expenses = financeRepository.getExpensesFromFirestore()
+
+            _uiState.update {
+                it.copy(
+                    expenseList = expenses.sortedByDescending { expense -> expense.createdAt.seconds },
+                    isLoading = false
+                )
+            }
+        }
     }
+
+
+
+}

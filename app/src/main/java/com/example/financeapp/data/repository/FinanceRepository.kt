@@ -4,6 +4,7 @@ import com.example.financeapp.data.model.Income
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import com.example.financeapp.data.model.Expense
 
 class FinanceRepository {
 
@@ -74,5 +75,9 @@ class FinanceRepository {
         } catch (exception: Exception) {
             false
         }
+    }
+
+    fun getExpensesFromFirestore(): List<Expense> {
+        return emptyList()
     }
 }
