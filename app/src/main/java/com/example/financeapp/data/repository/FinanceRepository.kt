@@ -84,4 +84,8 @@ class FinanceRepository {
     fun addExpenseToFirestore(expense: Expense): Boolean {
         return true
     }
+
+    fun deleteExpenseFromFirestore(expenseId: String): Boolean {
+        return true
+    }
 }

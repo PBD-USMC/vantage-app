@@ -174,24 +174,41 @@ class ExpenseViewModel : ViewModel() {
 
 
         fun loadExpenses() {
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    isLoading = true,
-                    errorMessage = ""
-                )
+            viewModelScope.launch {
+                _uiState.update {
+                    it.copy(
+                        isLoading = true,
+                        errorMessage = ""
+                    )
+                }
+
+                val expenses = financeRepository.getExpensesFromFirestore()
+
+                _uiState.update {
+                    it.copy(
+                        expenseList = expenses.sortedByDescending { expense -> expense.createdAt.seconds },
+                        isLoading = false
+                    )
+                }
             }
+        }
 
-            val expenses = financeRepository.getExpensesFromFirestore()
+    fun deleteExpense(expenseId: String) {
+        viewModelScope.launch {
+            val deleteResult = financeRepository.deleteExpenseFromFirestore(expenseId)
 
-            _uiState.update {
-                it.copy(
-                    expenseList = expenses.sortedByDescending { expense -> expense.createdAt.seconds },
-                    isLoading = false
-                )
+            if (deleteResult) {
+                loadExpenses()
+            } else {
+                _uiState.update {
+                    it.copy(
+                        errorMessage = "Failed to delete expense."
+                    )
+                }
             }
         }
     }
+
 
 
 
