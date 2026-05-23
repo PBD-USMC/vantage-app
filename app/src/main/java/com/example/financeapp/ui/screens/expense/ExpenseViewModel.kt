@@ -107,7 +107,37 @@ class ExpenseViewModel : ViewModel() {
         }
     }
 
-    fun loadExpenses() {
+    fun onSaveExpenseClick() {
+        val currentState = _uiState.value
+
+        val parsedAmount = currentState.amount.toDoubleOrNull()
+        val isAmountInvalid =
+            currentState.amount.isBlank() || parsedAmount == null || parsedAmount <= 0
+
+        if (isAmountInvalid) {
+            _uiState.update {
+                it.copy(
+                    amountError = true,
+                    isSavedSuccessfully = false,
+                    errorMessage = "Please enter a valid expense amount."
+                )
+            }
+            return
+        }
+
+        val expense = Expense(
+            amount = parsedAmount,
+            categoryName = currentState.selectedCategory,
+            paymentMethod = currentState.selectedPaymentMethod,
+            expenseType = currentState.selectedExpenseType,
+            date = Timestamp.now(),
+            note = currentState.note.trim(),
+            createdAt = Timestamp.now()
+        )
+    }
+
+
+        fun loadExpenses() {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
