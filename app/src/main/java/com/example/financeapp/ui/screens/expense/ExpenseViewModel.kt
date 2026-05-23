@@ -42,7 +42,12 @@ class ExpenseViewModel : ViewModel() {
         "Committed"
     )
 
+    init {
+        loadExpenses()
+    }
+
     fun onAmountChange(newValue: String) {
+        if (isValidDecimalInput(newValue)) {
             _uiState.update {
                 it.copy(
                     amount = newValue,
@@ -51,6 +56,7 @@ class ExpenseViewModel : ViewModel() {
                     errorMessage = ""
                 )
             }
+        }
     }
 
     fun onCategorySelected(category: String) {
