@@ -1,5 +1,3 @@
-Goal.kt
-
 package com.example.financeapp.data.model
 
 import com.google.firebase.Timestamp
