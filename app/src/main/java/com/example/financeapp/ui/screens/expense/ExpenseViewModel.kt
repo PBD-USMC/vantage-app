@@ -172,7 +172,6 @@ class ExpenseViewModel : ViewModel() {
 
     }
 
-
         fun loadExpenses() {
             viewModelScope.launch {
                 _uiState.update {
@@ -209,7 +208,17 @@ class ExpenseViewModel : ViewModel() {
         }
     }
 
+    fun clearSuccessMessage() {
+        _uiState.update {
+            it.copy(
+                isSavedSuccessfully = false
+            )
+        }
+    }
 
-
+    private fun isValidDecimalInput(value: String): Boolean {
+        return value.all { it.isDigit() || it == '.' } &&
+                value.count { it == '.' } <= 1
+    }
 
 }
