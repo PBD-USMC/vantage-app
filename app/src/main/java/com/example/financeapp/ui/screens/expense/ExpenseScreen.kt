@@ -46,7 +46,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.financeapp.data.model.Expense
+import com.example.financeapp.ui.components.FinanceDatePickerField
 import com.example.financeapp.ui.components.ScreenContainer
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun ExpenseScreen(
@@ -222,6 +225,15 @@ private fun AddExpenseCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            FinanceDatePickerField(
+                value = uiState.date,
+                label = "Expense Date",
+                placeholder = "Select expense date",
+                onDateSelected = viewModel::onDateChange
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             OutlinedTextField(
                 value = uiState.note,
                 onValueChange = viewModel::onNoteChange,
@@ -359,6 +371,11 @@ private fun ExpenseRecordCard(
                     fontWeight = FontWeight.Medium
                 )
 
+                Text(
+                    text = "Date: ${formatExpenseDate(expense)}",
+                    fontSize = 13.sp
+                )
+
                 if (expense.note.isNotBlank()) {
                     Text(
                         text = expense.note,
@@ -492,4 +509,12 @@ private fun ExpenseFilterChip(
             selectedLabelColor = Color.White
         )
     )
+}
+
+private fun formatExpenseDate(
+    expense: Expense
+): String {
+    val date = expense.date.toDate()
+    val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    return formatter.format(date)
 }

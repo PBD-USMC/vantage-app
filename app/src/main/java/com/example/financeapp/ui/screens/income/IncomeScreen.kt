@@ -54,7 +54,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.financeapp.data.model.Income
+import com.example.financeapp.ui.components.FinanceDatePickerField
 import com.example.financeapp.ui.components.ScreenContainer
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun IncomeScreen(
@@ -204,6 +207,15 @@ private fun AddIncomeCard(
                     MaterialTheme.colorScheme.primary
                 },
                 onItemSelected = viewModel::onIncomeTypeSelected
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            FinanceDatePickerField(
+                value = uiState.dateReceived,
+                label = "Date Received",
+                placeholder = "Select income received date",
+                onDateSelected = viewModel::onDateReceivedChange
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -379,6 +391,11 @@ private fun IncomeRecordCard(
                     text = income.incomeType,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
+                )
+
+                Text(
+                    text = "Date: ${formatIncomeDate(income)}",
+                    fontSize = 13.sp
                 )
 
                 if (income.note.isNotBlank()) {
@@ -580,4 +597,12 @@ private fun IncomeFilterChip(
             selectedLabelColor = Color.White
         )
     )
+}
+
+private fun formatIncomeDate(
+    income: Income
+): String {
+    val date = income.date.toDate()
+    val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    return formatter.format(date)
 }

@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
 
 class IncomeViewModel : ViewModel() {
 
@@ -173,7 +175,7 @@ class IncomeViewModel : ViewModel() {
             originalCurrency = currentState.originalCurrency.ifBlank { null },
             originalAmount = parsedOriginalAmount,
             incomeType = currentState.selectedIncomeType,
-            date = Timestamp.now(),
+            date = parseDateToTimestamp(currentState.dateReceived),
             note = currentState.note.trim(),
             createdAt = Timestamp.now()
         )
@@ -194,6 +196,7 @@ class IncomeViewModel : ViewModel() {
                     it.copy(
                         amountReceived = "",
                         amountReceivedError = false,
+                        dateReceived = "",
                         originalCurrency = "",
                         originalAmount = "",
                         originalAmountError = false,
@@ -264,5 +267,22 @@ class IncomeViewModel : ViewModel() {
     private fun isValidDecimalInput(value: String): Boolean {
         return value.all { it.isDigit() || it == '.' } &&
                 value.count { it == '.' } <= 1
+    }
+
+    private fun parseDateToTimestamp(dateText: String): Timestamp {
+        return try {
+            if (dateText.isBlank()) {
+                Timestamp.now()
+            } else {
+                val localDate = LocalDate.parse(dateText)
+                val instant = localDate
+                    .atStartOfDay(ZoneId.systemDefault())
+                    .toInstant()
+
+                Timestamp(instant.epochSecond, 0)
+            }
+        } catch (exception: Exception) {
+            Timestamp.now()
+        }
     }
 }
