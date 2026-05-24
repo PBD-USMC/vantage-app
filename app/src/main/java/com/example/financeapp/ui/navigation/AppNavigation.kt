@@ -1,18 +1,12 @@
 package com.example.financeapp.ui.navigation
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.financeapp.ui.screens.auth.LoginScreen
 import com.example.financeapp.ui.screens.auth.RegisterScreen
+import com.example.financeapp.ui.screens.dashboard.DashboardScreen
 import com.example.financeapp.ui.screens.expense.ExpenseScreen
 import com.example.financeapp.ui.screens.goal.GoalFormScreen
 import com.example.financeapp.ui.screens.goal.GoalScreen
@@ -69,7 +63,7 @@ fun AppNavigation() {
         }
 
         composable(Screen.Dashboard.route) {
-            TemporaryDashboardScreen(
+            DashboardScreen(
                 onIncomeClick = {
                     navController.navigate(Screen.Income.route)
                 },
@@ -114,38 +108,6 @@ fun AppNavigation() {
 
         composable(Screen.History.route) {
             HistoryScreen()
-        }
-    }
-}
-
-@Composable
-private fun TemporaryDashboardScreen(
-    onIncomeClick: () -> Unit,
-    onExpenseClick: () -> Unit,
-    onGoalClick: () -> Unit,
-    onHistoryClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "Dashboard")
-
-        Button(onClick = onIncomeClick) {
-            Text(text = "Add Income")
-        }
-
-        Button(onClick = onExpenseClick) {
-            Text(text = "Add Expense")
-        }
-
-        Button(onClick = onGoalClick) {
-            Text(text = "Goal")
-        }
-
-        Button(onClick = onHistoryClick) {
-            Text(text = "History")
         }
     }
 }
