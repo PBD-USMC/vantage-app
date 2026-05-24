@@ -1,6 +1,7 @@
 package com.example.financeapp.data.repository
 
 import com.example.financeapp.data.model.Expense
+import com.example.financeapp.data.model.Goal
 import com.example.financeapp.data.model.Income
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -77,22 +78,6 @@ class FinanceRepository {
         }
     }
 
-    suspend fun getExpensesFromFirestore(): List<Expense> {
-        return try {
-            val userId = getCurrentUserId() ?: return emptyList()
-
-            firestore
-                .collection("users")
-                .document(userId)
-                .collection("expenses")
-                .get()
-                .await()
-                .toObjects(Expense::class.java)
-        } catch (exception: Exception) {
-            emptyList()
-        }
-    }
-
     suspend fun addExpenseToFirestore(expense: Expense): Boolean {
         return try {
             val userId = getCurrentUserId() ?: return false
@@ -117,6 +102,22 @@ class FinanceRepository {
         }
     }
 
+    suspend fun getExpensesFromFirestore(): List<Expense> {
+        return try {
+            val userId = getCurrentUserId() ?: return emptyList()
+
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("expenses")
+                .get()
+                .await()
+                .toObjects(Expense::class.java)
+        } catch (exception: Exception) {
+            emptyList()
+        }
+    }
+
     suspend fun deleteExpenseFromFirestore(expenseId: String): Boolean {
         return try {
             val userId = getCurrentUserId() ?: return false
@@ -136,6 +137,122 @@ class FinanceRepository {
             true
         } catch (exception: Exception) {
             false
+        }
+    }
+
+    suspend fun saveGoalToFirestore(goal: Goal): Boolean {
+        return try {
+            val userId = getCurrentUserId() ?: return false
+
+            val goalDocument = firestore
+                .collection("users")
+                .document(userId)
+                .collection("goals")
+                .document()
+
+            val goalWithId = goal.copy(
+                goalId = goalDocument.id
+            )
+
+            goalDocument
+                .set(goalWithId)
+                .await()
+
+            true
+        } catch (exception: Exception) {
+            false
+        }
+    }
+
+    suspend fun updateGoalInFirestore(goal: Goal): Boolean {
+        return try {
+            val userId = getCurrentUserId() ?: return false
+
+            if (goal.goalId.isBlank()) {
+                return false
+            }
+
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("goals")
+                .document(goal.goalId)
+                .set(goal)
+                .await()
+
+            true
+        } catch (exception: Exception) {
+            false
+        }
+    }
+
+    suspend fun deleteGoalFromFirestore(goalId: String): Boolean {
+        return try {
+            val userId = getCurrentUserId() ?: return false
+
+            if (goalId.isBlank()) {
+                return false
+            }
+
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("goals")
+                .document(goalId)
+                .delete()
+                .await()
+
+            true
+        } catch (exception: Exception) {
+            false
+        }
+    }
+
+    suspend fun pauseOtherActiveGoals(activeGoalId: String): Boolean {
+        return try {
+            val userId = getCurrentUserId() ?: return false
+
+            if (activeGoalId.isBlank()) {
+                return false
+            }
+
+            val activeGoalsSnapshot = firestore
+                .collection("users")
+                .document(userId)
+                .collection("goals")
+                .whereEqualTo("status", "Active")
+                .get()
+                .await()
+
+            val batch = firestore.batch()
+
+            activeGoalsSnapshot.documents.forEach { document ->
+                if (document.id != activeGoalId) {
+                    batch.update(document.reference, "status", "Paused")
+                }
+            }
+
+            batch.commit().await()
+
+            true
+        } catch (exception: Exception) {
+            false
+        }
+    }
+
+    suspend fun getGoalsFromFirestore(): List<Goal> {
+        return try {
+            val userId = getCurrentUserId() ?: return emptyList()
+
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("goals")
+                .get()
+                .await()
+                .toObjects(Goal::class.java)
+        } catch (exception: Exception) {
+            emptyList()
         }
     }
 }

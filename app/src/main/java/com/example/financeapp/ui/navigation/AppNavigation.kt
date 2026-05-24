@@ -14,6 +14,9 @@ import androidx.navigation.compose.rememberNavController
 import com.example.financeapp.ui.screens.auth.LoginScreen
 import com.example.financeapp.ui.screens.auth.RegisterScreen
 import com.example.financeapp.ui.screens.expense.ExpenseScreen
+import com.example.financeapp.ui.screens.goal.GoalFormScreen
+import com.example.financeapp.ui.screens.goal.GoalScreen
+import com.example.financeapp.ui.screens.history.HistoryScreen
 import com.example.financeapp.ui.screens.income.IncomeScreen
 
 sealed class Screen(val route: String) {
@@ -23,11 +26,7 @@ sealed class Screen(val route: String) {
     object Income : Screen("income")
     object Expense : Screen("expense")
     object Goal : Screen("goal")
-    object GoalForm : Screen("goal_form?goalId={goalId}") {
-        fun createRoute(goalId: String = ""): String {
-            return "goal_form?goalId=$goalId"
-        }
-    }
+    object GoalForm : Screen("goal_form")
     object History : Screen("history")
 }
 
@@ -95,15 +94,26 @@ fun AppNavigation() {
         }
 
         composable(Screen.Goal.route) {
-            TemporaryScreen(title = "Goal Screen")
+            GoalScreen(
+                onAddNewGoalClick = {
+                    navController.navigate(Screen.GoalForm.route)
+                },
+                onGoalClick = {
+                    navController.navigate(Screen.GoalForm.route)
+                }
+            )
         }
 
         composable(Screen.GoalForm.route) {
-            TemporaryScreen(title = "Goal Form Screen")
+            GoalFormScreen(
+                onGoalSaved = {
+                    navController.popBackStack()
+                }
+            )
         }
 
         composable(Screen.History.route) {
-            TemporaryScreen(title = "History Screen")
+            HistoryScreen()
         }
     }
 }
@@ -137,16 +147,5 @@ private fun TemporaryDashboardScreen(
         Button(onClick = onHistoryClick) {
             Text(text = "History")
         }
-    }
-}
-
-@Composable
-private fun TemporaryScreen(title: String) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = title)
     }
 }
