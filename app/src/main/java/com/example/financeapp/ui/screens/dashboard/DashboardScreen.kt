@@ -1,25 +1,35 @@
 package com.example.financeapp.ui.screens.dashboard
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.TrackChanges
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -29,6 +39,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -38,13 +49,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.financeapp.data.model.Expense
-import com.example.financeapp.data.model.Goal
-import com.example.financeapp.data.model.Income
 import com.example.financeapp.ui.components.ScreenContainer
+import com.example.financeapp.ui.theme.FinanceAmber
 import com.example.financeapp.ui.theme.FinanceGreen
 import com.example.financeapp.ui.theme.FinanceRed
-import com.example.financeapp.ui.utils.formatTimestampToDate
 
 @Composable
 fun DashboardScreen(
@@ -72,320 +80,137 @@ fun DashboardScreen(
     }
 
     ScreenContainer(
-        maxWidth = 560.dp
+        maxWidth = 620.dp
     ) {
-        ScreenTitleWithIcon(
-            title = "Dashboard",
-            subtitle = "Your monthly financial overview",
-            icon = Icons.Default.AccountBalanceWallet
+        DashboardTopSection(
+            monthLabel = uiState.monthLabel,
+            onPreviousMonthClick = viewModel::onPreviousMonthClick,
+            onNextMonthClick = viewModel::onNextMonthClick,
+            onCurrentMonthClick = viewModel::onCurrentMonthClick
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        if (uiState.isLoading) {
-            Text(
-                text = "Loading dashboard...",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
-            )
-        } else {
-            SummaryCards(
-                totalIncome = uiState.totalIncome,
-                totalExpense = uiState.totalExpense,
-                balance = uiState.balance
-            )
+        SummaryCardsRow(
+            totalIncome = uiState.totalIncome,
+            totalExpenses = uiState.totalExpenses,
+            balance = uiState.balance
+        )
 
-            Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-            QuickActionsCard(
-                onIncomeClick = onIncomeClick,
-                onExpenseClick = onExpenseClick,
-                onGoalClick = onGoalClick,
-                onHistoryClick = onHistoryClick
-            )
+        SavingsGoalCard(
+            goalTitle = uiState.goalTitle,
+            goalDeadlineLabel = uiState.goalDeadlineLabel,
+            goalProgress = uiState.goalProgress,
+            savedAmount = uiState.savedAmount,
+            remainingAmount = uiState.remainingAmount,
+            monthlySaving = uiState.monthlySaving,
+            onClick = onGoalClick
+        )
 
-            Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-            GoalProgressCard(
-                goal = uiState.activeGoal,
-                progressPercentage = uiState.goalProgressPercentage,
-                remainingAmount = uiState.goalRemainingAmount,
-                onGoalClick = onGoalClick
-            )
+        SpendingSummaryCard(
+            committedExpenses = uiState.committedExpenses,
+            discretionaryExpenses = uiState.discretionaryExpenses,
+            savedBalance = uiState.savedBalance
+        )
 
-            Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-            RecentRecordsCard(
-                recentIncomes = uiState.recentIncomes,
-                recentExpenses = uiState.recentExpenses,
-                onHistoryClick = onHistoryClick
-            )
-        }
+        RecentTransactionsCard(
+            transactions = uiState.recentTransactions,
+            onClick = onHistoryClick
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        QuickActionsRow(
+            onIncomeClick = onIncomeClick,
+            onExpenseClick = onExpenseClick
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
 @Composable
-private fun SummaryCards(
-    totalIncome: Double,
-    totalExpense: Double,
-    balance: Double
+private fun DashboardTopSection(
+    monthLabel: String,
+    onPreviousMonthClick: () -> Unit,
+    onNextMonthClick: () -> Unit,
+    onCurrentMonthClick: () -> Unit
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        SummaryCard(
-            title = "Total Income",
-            amount = "LKR ${formatAmount(totalIncome)}",
-            icon = Icons.Default.Payments,
-            amountColor = FinanceGreen
-        )
-
-        SummaryCard(
-            title = "Total Expenses",
-            amount = "LKR ${formatAmount(totalExpense)}",
-            icon = Icons.Default.ShoppingCart,
-            amountColor = FinanceRed
-        )
-
-        SummaryCard(
-            title = "Current Balance",
-            amount = "LKR ${formatAmount(balance)}",
-            icon = Icons.Default.AccountBalanceWallet,
-            amountColor = if (balance >= 0) FinanceGreen else FinanceRed
-        )
-    }
-}
-
-@Composable
-private fun SummaryCard(
-    title: String,
-    amount: String,
-    icon: ImageVector,
-    amountColor: Color
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
+    Column {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(30.dp)
-            )
-
-            Spacer(modifier = Modifier.size(12.dp))
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+            Column {
                 Text(
-                    text = title,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium
+                    text = "Dashboard",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = amount,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = amountColor
+                    text = "Monthly overview",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            IconButton(
+                onClick = onCurrentMonthClick,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Today,
+                    contentDescription = "Current month",
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
         }
-    }
-}
 
-@Composable
-private fun QuickActionsCard(
-    onIncomeClick: () -> Unit,
-    onExpenseClick: () -> Unit,
-    onGoalClick: () -> Unit,
-    onHistoryClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        Spacer(modifier = Modifier.height(14.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
-            SectionHeader(
-                title = "Quick Actions",
-                icon = Icons.Default.Add
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Button(
-                onClick = onIncomeClick,
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Payments,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
+                IconButton(
+                    onClick = onPreviousMonthClick
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowLeft,
+                        contentDescription = "Previous month"
+                    )
+                }
 
-                Spacer(modifier = Modifier.size(8.dp))
-
-                Text("Add Income")
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(
-                onClick = onExpenseClick,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ShoppingCart,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-
-                Spacer(modifier = Modifier.size(8.dp))
-
-                Text("Add Expense")
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedButton(
-                onClick = onGoalClick,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Flag,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-
-                Spacer(modifier = Modifier.size(8.dp))
-
-                Text("View Goals")
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedButton(
-                onClick = onHistoryClick,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Default.History,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-
-                Spacer(modifier = Modifier.size(8.dp))
-
-                Text("View History")
-            }
-        }
-    }
-}
-
-@Composable
-private fun GoalProgressCard(
-    goal: Goal?,
-    progressPercentage: Int,
-    remainingAmount: Double,
-    onGoalClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            SectionHeader(
-                title = "Goal Progress",
-                icon = Icons.Default.TrackChanges
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            if (goal == null) {
                 Text(
-                    text = "No active goal found",
+                    text = monthLabel,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "Create a savings goal to track your progress from the dashboard.",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedButton(
-                    onClick = onGoalClick,
-                    modifier = Modifier.fillMaxWidth()
+                IconButton(
+                    onClick = onNextMonthClick
                 ) {
-                    Text("Create Goal")
-                }
-            } else {
-                Text(
-                    text = goal.title.ifBlank { "Savings Goal" },
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "$progressPercentage% completed",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = FinanceGreen
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                DashboardProgressBar(
-                    progress = progressPercentage / 100f
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                DashboardInfoRow(
-                    label = "Remaining",
-                    value = "LKR ${formatAmount(remainingAmount)}"
-                )
-
-                DashboardInfoRow(
-                    label = "Monthly Saving",
-                    value = "LKR ${formatAmount(goal.monthlyRequiredSaving)}"
-                )
-
-                DashboardInfoRow(
-                    label = "Deadline",
-                    value = formatTimestampToDate(goal.deadline)
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedButton(
-                    onClick = onGoalClick,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("View Goal Details")
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowRight,
+                        contentDescription = "Next month"
+                    )
                 }
             }
         }
@@ -393,188 +218,116 @@ private fun GoalProgressCard(
 }
 
 @Composable
-private fun DashboardProgressBar(
-    progress: Float
+private fun SummaryCardsRow(
+    totalIncome: Double,
+    totalExpenses: Double,
+    balance: Double
 ) {
-    androidx.compose.foundation.layout.Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(8.dp)
-            .padding(horizontal = 0.dp)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        androidx.compose.foundation.layout.Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp),
-        ) {
-            androidx.compose.foundation.layout.Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-            )
-        }
+        SummaryMiniCard(
+            title = "Income",
+            currency = "LKR",
+            amount = formatAmount(totalIncome),
+            icon = Icons.Default.ArrowUpward,
+            iconColor = FinanceGreen,
+            modifier = Modifier.weight(1f)
+        )
 
-        androidx.compose.foundation.layout.Box(
-            modifier = Modifier
-                .fillMaxWidth(progress.coerceIn(0f, 1f))
-                .height(8.dp)
+        SummaryMiniCard(
+            title = "Expenses",
+            currency = "LKR",
+            amount = formatAmount(totalExpenses),
+            icon = Icons.Default.ArrowDownward,
+            iconColor = FinanceRed,
+            modifier = Modifier.weight(1f)
+        )
+
+        SummaryMiniCard(
+            title = "Balance",
+            currency = "LKR",
+            amount = formatAmount(balance),
+            icon = Icons.Default.AccountBalanceWallet,
+            iconColor = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.weight(1f)
         )
     }
 }
 
 @Composable
-private fun RecentRecordsCard(
-    recentIncomes: List<Income>,
-    recentExpenses: List<Expense>,
-    onHistoryClick: () -> Unit
+private fun SummaryMiniCard(
+    title: String,
+    currency: String,
+    amount: String,
+    icon: ImageVector,
+    iconColor: Color,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        modifier = modifier.height(150.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 8.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            SectionHeader(
-                title = "Recent Records",
-                icon = Icons.Default.History
+            IconBadge(
+                icon = icon,
+                tint = iconColor
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            if (recentIncomes.isEmpty() && recentExpenses.isEmpty()) {
-                Text(
-                    text = "No recent records found.",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            } else {
-                recentIncomes.forEach { income ->
-                    RecentRecordRow(
-                        title = income.source.ifBlank { "Income" },
-                        subtitle = formatTimestampToDate(income.date),
-                        amount = "+ LKR ${formatAmount(income.amount)}",
-                        amountColor = FinanceGreen
-                    )
-                }
-
-                recentExpenses.forEach { expense ->
-                    RecentRecordRow(
-                        title = expense.categoryName.ifBlank { "Expense" },
-                        subtitle = formatTimestampToDate(expense.date),
-                        amount = "- LKR ${formatAmount(expense.amount)}",
-                        amountColor = FinanceRed
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedButton(
-                onClick = onHistoryClick,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Open Full History")
-            }
-        }
-    }
-}
-
-@Composable
-private fun RecentRecordRow(
-    title: String,
-    subtitle: String,
-    amount: String,
-    amountColor: Color
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 7.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
             Text(
                 text = title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1
             )
 
+            Spacer(modifier = Modifier.height(6.dp))
+
             Text(
-                text = subtitle,
+                text = currency,
                 fontSize = 13.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
-
-        Text(
-            text = amount,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            color = amountColor
-        )
-    }
-}
-
-@Composable
-private fun DashboardInfoRow(
-    label: String,
-    value: String
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 5.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium
-        )
-
-        Text(
-            text = value,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
-private fun ScreenTitleWithIcon(
-    title: String,
-    subtitle: String,
-    icon: ImageVector
-) {
-    Column {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(30.dp)
+                fontWeight = FontWeight.Medium,
+                maxLines = 1
             )
 
-            Spacer(modifier = Modifier.size(10.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
             Text(
-                text = title,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                text = amount,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
             )
         }
+    }
+}
 
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = subtitle,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium
+@Composable
+private fun IconBadge(
+    icon: ImageVector,
+    tint: Color
+) {
+    Box(
+        modifier = Modifier
+            .size(34.dp)
+            .clip(CircleShape)
+            .background(tint.copy(alpha = 0.14f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = tint
         )
     }
 }
@@ -590,8 +343,8 @@ private fun SectionHeader(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(22.dp)
+            modifier = Modifier.size(22.dp),
+            tint = MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.size(8.dp))
@@ -601,6 +354,362 @@ private fun SectionHeader(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
+    }
+}
+
+@Composable
+private fun SavingsGoalCard(
+    goalTitle: String,
+    goalDeadlineLabel: String,
+    goalProgress: Float,
+    savedAmount: Double,
+    remainingAmount: Double,
+    monthlySaving: Double,
+    onClick: () -> Unit
+) {
+    val hasGoal = goalTitle.isNotBlank()
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            SectionHeader(
+                title = "Savings Goal",
+                icon = Icons.Default.Flag
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            if (!hasGoal) {
+                Text(
+                    text = "No savings goal yet",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "Create your first savings goal to track your progress.",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = goalTitle,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        Text(
+                            text = "Deadline: $goalDeadlineLabel",
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    Text(
+                        text = "${(goalProgress * 100).toInt()}%",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = FinanceGreen
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                FinanceProgressBar(progress = goalProgress)
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                GoalAmountRow(
+                    label = "Saved",
+                    value = "LKR ${formatAmount(savedAmount)}"
+                )
+
+                GoalAmountRow(
+                    label = "Remaining",
+                    value = "LKR ${formatAmount(remainingAmount)}"
+                )
+
+                GoalAmountRow(
+                    label = "Monthly Saving",
+                    value = "LKR ${formatAmount(monthlySaving)}"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FinanceProgressBar(
+    progress: Float
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(8.dp)
+            .clip(MaterialTheme.shapes.small)
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(progress.coerceIn(0f, 1f))
+                .height(8.dp)
+                .clip(MaterialTheme.shapes.small)
+                .background(FinanceGreen)
+        )
+    }
+}
+
+@Composable
+private fun GoalAmountRow(
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium
+        )
+
+        Text(
+            text = value,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+private fun SpendingSummaryCard(
+    committedExpenses: Double,
+    discretionaryExpenses: Double,
+    savedBalance: Double
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            SectionHeader(
+                title = "Spending Summary",
+                icon = Icons.Default.BarChart
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SpendingRow(
+                color = FinanceRed,
+                category = "Committed",
+                amount = "LKR ${formatAmount(committedExpenses)}"
+            )
+
+            SpendingRow(
+                color = FinanceAmber,
+                category = "Discretionary",
+                amount = "LKR ${formatAmount(discretionaryExpenses)}"
+            )
+
+            SpendingRow(
+                color = FinanceGreen,
+                category = "Saved Balance",
+                amount = "LKR ${formatAmount(savedBalance)}"
+            )
+        }
+    }
+}
+
+@Composable
+private fun SpendingRow(
+    color: Color,
+    category: String,
+    amount: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+
+            Spacer(modifier = Modifier.size(10.dp))
+
+            Text(
+                text = category,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+
+        Text(
+            text = amount,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+private fun RecentTransactionsCard(
+    transactions: List<DashboardTransaction>,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            SectionHeader(
+                title = "Recent Transactions",
+                icon = Icons.Default.History
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (transactions.isEmpty()) {
+                Text(
+                    text = "No recent transactions yet.",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            } else {
+                transactions.forEach { transaction ->
+                    TransactionRow(
+                        title = transaction.title,
+                        date = transaction.date,
+                        category = transaction.category,
+                        amount = transaction.amount,
+                        isIncome = transaction.isIncome
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TransactionRow(
+    title: String,
+    date: String,
+    category: String,
+    amount: String,
+    isIncome: Boolean
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 9.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Text(
+                text = "$date • $category",
+                fontSize = 13.sp
+            )
+        }
+
+        Text(
+            text = amount,
+            fontSize = 15.sp,
+            color = if (isIncome) FinanceGreen else FinanceRed,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+private fun QuickActionsRow(
+    onIncomeClick: () -> Unit,
+    onExpenseClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Button(
+            onClick = onIncomeClick,
+            modifier = Modifier
+                .weight(1f)
+                .height(52.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+
+            Spacer(modifier = Modifier.size(6.dp))
+
+            Text(
+                text = "Income",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1
+            )
+        }
+
+        OutlinedButton(
+            onClick = onExpenseClick,
+            modifier = Modifier
+                .weight(1f)
+                .height(52.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Remove,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+
+            Spacer(modifier = Modifier.size(6.dp))
+
+            Text(
+                text = "Expense",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1
+            )
+        }
     }
 }
 

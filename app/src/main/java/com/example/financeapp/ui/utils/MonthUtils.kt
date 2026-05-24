@@ -5,6 +5,8 @@ import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.Date
 import java.util.Locale
 import kotlin.math.ceil
@@ -22,6 +24,84 @@ fun parseDateToTimestamp(dateText: String): Timestamp {
         .toInstant()
 
     return Timestamp(Date.from(instant))
+}
+
+fun getCurrentMonthKey(): String {
+    val currentMonth = YearMonth.now()
+    return formatMonthKey(currentMonth)
+}
+
+fun getCurrentMonthLabel(): String {
+    val currentMonth = YearMonth.now()
+    return formatMonthLabel(currentMonth)
+}
+
+fun formatMonthKey(
+    yearMonth: YearMonth
+): String {
+    return yearMonth.format(
+        DateTimeFormatter.ofPattern("yyyy-MM")
+    )
+}
+
+fun formatMonthLabel(
+    yearMonth: YearMonth
+): String {
+    val monthName = yearMonth.month.getDisplayName(
+        TextStyle.FULL,
+        Locale.ENGLISH
+    )
+
+    return "$monthName ${yearMonth.year}"
+}
+
+fun parseMonthKey(
+    monthKey: String
+): YearMonth {
+    return YearMonth.parse(
+        monthKey,
+        DateTimeFormatter.ofPattern("yyyy-MM")
+    )
+}
+
+fun getPreviousMonthKey(
+    monthKey: String
+): String {
+    val yearMonth = parseMonthKey(monthKey)
+    return formatMonthKey(yearMonth.minusMonths(1))
+}
+
+fun getNextMonthKey(
+    monthKey: String
+): String {
+    val yearMonth = parseMonthKey(monthKey)
+    return formatMonthKey(yearMonth.plusMonths(1))
+}
+
+fun getMonthLabelFromKey(
+    monthKey: String
+): String {
+    val yearMonth = parseMonthKey(monthKey)
+    return formatMonthLabel(yearMonth)
+}
+
+fun isDateInMonth(
+    timestamp: Timestamp,
+    monthKey: String
+): Boolean {
+    val formattedDate = formatTimestampToDate(timestamp)
+    return formattedDate.startsWith(monthKey)
+}
+
+fun formatMonthLabelFromDate(
+    date: LocalDate = LocalDate.now()
+): String {
+    val monthName = date.month.getDisplayName(
+        TextStyle.FULL,
+        Locale.ENGLISH
+    )
+
+    return "$monthName ${date.year}"
 }
 
 fun calculateMonthlyRequiredSaving(
