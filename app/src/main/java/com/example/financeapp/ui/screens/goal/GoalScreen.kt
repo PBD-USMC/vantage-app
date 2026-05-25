@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Flag
@@ -51,8 +50,9 @@ fun GoalScreen(
     val uiState by viewModel.uiState.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val displayGoal = uiState.savedGoals.firstOrNull { it.status == "Active" }
-        ?: uiState.savedGoals.firstOrNull()
+    val displayGoal = uiState.savedGoals.firstOrNull { goal ->
+        goal.status == "Active"
+    } ?: uiState.savedGoals.firstOrNull()
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -161,7 +161,8 @@ private fun CurrentGoalCard(
             } else {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
                 ) {
                     Column(
                         modifier = Modifier.weight(1f)
@@ -290,7 +291,8 @@ private fun SavedGoalItem(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
                 Column(
                     modifier = Modifier.weight(1f)
@@ -432,6 +434,8 @@ private fun SectionHeader(
     }
 }
 
-private fun formatAmount(value: Double): String {
+private fun formatAmount(
+    value: Double
+): String {
     return "%,.0f".format(value)
 }

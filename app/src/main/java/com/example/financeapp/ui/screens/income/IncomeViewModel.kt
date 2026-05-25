@@ -33,12 +33,10 @@ class IncomeViewModel : ViewModel() {
         "Variable",
         "Irregular",
         "Freelance",
-        "Crypto Gain",
-        "Crypto Loss"
+        "Crypto Gain"
     )
 
     val currencies = listOf(
-        "LKR",
         "USD",
         "EUR",
         "GBP",
@@ -60,6 +58,7 @@ class IncomeViewModel : ViewModel() {
                 it.copy(
                     amountReceived = newValue,
                     amountReceivedError = false,
+                    shouldScrollToAmount = false,
                     isSavedSuccessfully = false,
                     errorMessage = ""
                 )
@@ -100,7 +99,7 @@ class IncomeViewModel : ViewModel() {
     fun onCurrencyChange(newValue: String) {
         _uiState.update {
             it.copy(
-                currency = newValue.uppercase(),
+                currency = "LKR",
                 isSavedSuccessfully = false,
                 errorMessage = ""
             )
@@ -123,6 +122,7 @@ class IncomeViewModel : ViewModel() {
                 it.copy(
                     originalAmount = newValue,
                     originalAmountError = false,
+                    shouldScrollToOriginalAmount = false,
                     isSavedSuccessfully = false,
                     errorMessage = ""
                 )
@@ -161,6 +161,10 @@ class IncomeViewModel : ViewModel() {
                 it.copy(
                     amountReceivedError = isAmountInvalid,
                     originalAmountError = isOriginalAmountInvalid,
+
+                    shouldScrollToAmount = isAmountInvalid,
+                    shouldScrollToOriginalAmount = !isAmountInvalid && isOriginalAmountInvalid,
+
                     isSavedSuccessfully = false,
                     errorMessage = "Please enter valid income details."
                 )
@@ -171,7 +175,7 @@ class IncomeViewModel : ViewModel() {
         val income = Income(
             source = currentState.selectedIncomeSource,
             amount = parsedAmount,
-            currency = currentState.currency.ifBlank { "LKR" },
+            currency = "LKR",
             originalCurrency = currentState.originalCurrency.ifBlank { null },
             originalAmount = parsedOriginalAmount,
             incomeType = currentState.selectedIncomeType,
@@ -197,10 +201,15 @@ class IncomeViewModel : ViewModel() {
                         amountReceived = "",
                         amountReceivedError = false,
                         dateReceived = "",
+                        currency = "LKR",
                         originalCurrency = "",
                         originalAmount = "",
                         originalAmountError = false,
                         note = "",
+
+                        shouldScrollToAmount = false,
+                        shouldScrollToOriginalAmount = false,
+
                         isLoading = false,
                         isSavedSuccessfully = true,
                         errorMessage = ""
@@ -260,6 +269,15 @@ class IncomeViewModel : ViewModel() {
         _uiState.update {
             it.copy(
                 isSavedSuccessfully = false
+            )
+        }
+    }
+
+    fun clearScrollRequests() {
+        _uiState.update {
+            it.copy(
+                shouldScrollToAmount = false,
+                shouldScrollToOriginalAmount = false
             )
         }
     }

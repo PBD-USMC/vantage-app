@@ -22,12 +22,12 @@ class ExpenseViewModel : ViewModel() {
 
     val categories = listOf(
         "Food",
-        "Transport",
         "Rent",
-        "Utilities",
         "Subscriptions",
-        "Entertainment",
         "Shopping",
+        "Utilities",
+        "Transport",
+        "Entertainment",
         "Other"
     )
 
@@ -54,6 +54,7 @@ class ExpenseViewModel : ViewModel() {
                 it.copy(
                     amount = newValue,
                     amountError = false,
+                    shouldScrollToAmount = false,
                     isSavedSuccessfully = false,
                     errorMessage = ""
                 )
@@ -126,6 +127,7 @@ class ExpenseViewModel : ViewModel() {
             _uiState.update {
                 it.copy(
                     amountError = true,
+                    shouldScrollToAmount = true,
                     isSavedSuccessfully = false,
                     errorMessage = "Please enter a valid expense amount."
                 )
@@ -161,6 +163,7 @@ class ExpenseViewModel : ViewModel() {
                         amountError = false,
                         date = "",
                         note = "",
+                        shouldScrollToAmount = false,
                         isLoading = false,
                         isSavedSuccessfully = true,
                         errorMessage = ""
@@ -220,6 +223,14 @@ class ExpenseViewModel : ViewModel() {
         _uiState.update {
             it.copy(
                 isSavedSuccessfully = false
+            )
+        }
+    }
+
+    fun clearScrollRequests() {
+        _uiState.update {
+            it.copy(
+                shouldScrollToAmount = false
             )
         }
     }

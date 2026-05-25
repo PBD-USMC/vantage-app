@@ -1,5 +1,6 @@
 package com.example.financeapp.ui.screens.expense
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,9 +10,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.ReceiptLong
@@ -19,22 +21,20 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,20 +45,26 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.financeapp.data.model.Expense
 import com.example.financeapp.ui.components.FinanceDatePickerField
 import com.example.financeapp.ui.components.ScreenContainer
-import java.text.SimpleDateFormat
-import java.util.Locale
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ExpenseScreen(
     viewModel: ExpenseViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    val snackbarHostState = rememberSnackbarHostState()
+    val amountRequester = remember { BringIntoViewRequester() }
+    val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(uiState.shouldScrollToAmount) {
+        if (uiState.shouldScrollToAmount) {
+            amountRequester.bringIntoView()
+            viewModel.clearScrollRequests()
+        }
+    }
 
     LaunchedEffect(uiState.isSavedSuccessfully) {
         if (uiState.isSavedSuccessfully) {
@@ -86,10 +92,10 @@ fun ExpenseScreen(
         ) {
             Column(
                 modifier = Modifier.padding(innerPadding),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 ScreenTitleWithIcon(
-                    title = "Expense Module",
+                    title = "Add Expense",
                     subtitle = "Record spending before you forget it",
                     icon = Icons.Default.ReceiptLong
                 )
@@ -97,53 +103,23 @@ fun ExpenseScreen(
                 AddExpenseCard(
                     uiState = uiState,
                     viewModel = viewModel,
+                    amountRequester = amountRequester,
                     onSaveClick = {
                         focusManager.clearFocus()
                         viewModel.onSaveExpenseClick()
                     }
                 )
-
-                ExpenseSummaryCard(
-                    expenseList = uiState.expenseList
-                )
-
-                SectionTitle(text = "Saved Expense Records")
-
-                if (uiState.isLoading) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                } else if (uiState.expenseList.isEmpty()) {
-                    EmptyExpenseCard()
-                } else {
-                    uiState.expenseList.forEach { expense ->
-                        ExpenseRecordCard(
-                            expense = expense,
-                            onDeleteClick = {
-                                viewModel.deleteExpense(expense.expenseId)
-                            }
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
 }
 
-@Composable
-private fun rememberSnackbarHostState(): SnackbarHostState {
-    return androidx.compose.runtime.remember { SnackbarHostState() }
-}
-
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AddExpenseCard(
     uiState: ExpenseUiState,
     viewModel: ExpenseViewModel,
+    amountRequester: BringIntoViewRequester,
     onSaveClick: () -> Unit
 ) {
     Card(
@@ -165,14 +141,14 @@ private fun AddExpenseCard(
                         contentDescription = null
                     )
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .bringIntoViewRequester(amountRequester),
                 singleLine = true,
                 isError = uiState.amountError,
                 supportingText = {
                     if (uiState.amountError) {
                         Text("Please enter a valid amount")
-                    } else {
-                        Text("Enter the expense amount")
                     }
                 },
                 keyboardOptions = KeyboardOptions(
@@ -227,8 +203,8 @@ private fun AddExpenseCard(
 
             FinanceDatePickerField(
                 value = uiState.date,
-                label = "Expense Date",
-                placeholder = "Select expense date",
+                label = "Date",
+                placeholder = "Select date",
                 onDateSelected = viewModel::onDateChange
             )
 
@@ -238,7 +214,7 @@ private fun AddExpenseCard(
                 value = uiState.note,
                 onValueChange = viewModel::onNoteChange,
                 label = { Text("Note") },
-                placeholder = { Text("Example: Coffee with friends") },
+                placeholder = { Text("Example: Lunch, transport, or subscription payment") },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.EditNote,
@@ -279,145 +255,17 @@ private fun AddExpenseCard(
 }
 
 @Composable
-private fun ExpenseSummaryCard(
-    expenseList: List<Expense>
-) {
-    val totalExpenses = expenseList.sumOf { expense -> expense.amount }
-    val committedTotal = expenseList
-        .filter { expense -> expense.expenseType == "Committed" }
-        .sumOf { expense -> expense.amount }
-    val discretionaryTotal = expenseList
-        .filter { expense -> expense.expenseType == "Discretionary" }
-        .sumOf { expense -> expense.amount }
-
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = "Expense Summary",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Total recorded expenses: LKR ${"%.2f".format(totalExpenses)}",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Text(
-                text = "Committed: LKR ${"%.2f".format(committedTotal)}",
-                fontSize = 14.sp
-            )
-
-            Text(
-                text = "Discretionary: LKR ${"%.2f".format(discretionaryTotal)}",
-                fontSize = 14.sp
-            )
-
-            Text(
-                text = "Records: ${expenseList.size}",
-                fontSize = 14.sp
-            )
-        }
-    }
-}
-
-@Composable
-private fun EmptyExpenseCard() {
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = "No expense records yet. Add food, transport, rent, subscriptions, or other spending to understand where your money goes.",
-            modifier = Modifier.padding(16.dp),
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium
-        )
-    }
-}
-
-@Composable
-private fun ExpenseRecordCard(
-    expense: Expense,
-    onDeleteClick: () -> Unit
-) {
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = expense.categoryName,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Text(
-                    text = "${expense.paymentMethod} • ${expense.expenseType}",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Text(
-                    text = "Date: ${formatExpenseDate(expense)}",
-                    fontSize = 13.sp
-                )
-
-                if (expense.note.isNotBlank()) {
-                    Text(
-                        text = expense.note,
-                        fontSize = 13.sp
-                    )
-                }
-            }
-
-            Column(
-                horizontalAlignment = Alignment.End
-            ) {
-                Text(
-                    text = "LKR ${"%.2f".format(expense.amount)}",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                IconButton(
-                    onClick = onDeleteClick
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete expense"
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun ChipRows(
     items: List<String>,
     selectedItem: String,
     selectedColor: Color,
     onItemSelected: (String) -> Unit
 ) {
-    val rows = items.chunked(2)
+    val rows = items.chunked(3)
     val focusManager = LocalFocusManager.current
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         rows.forEach { rowItems ->
             Row(
@@ -509,12 +357,4 @@ private fun ExpenseFilterChip(
             selectedLabelColor = Color.White
         )
     )
-}
-
-private fun formatExpenseDate(
-    expense: Expense
-): String {
-    val date = expense.date.toDate()
-    val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    return formatter.format(date)
 }
