@@ -1,7 +1,9 @@
 package com.example.financeapp.ui.screens.goal
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,6 +15,7 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
@@ -20,8 +23,8 @@ import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -36,6 +39,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -45,13 +49,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.financeapp.ui.components.FinanceDatePickerField
 import com.example.financeapp.ui.components.ScreenContainer
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GoalFormScreen(
+    goalId: String = "",
     onGoalSaved: () -> Unit = {},
     viewModel: GoalViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    val isEditingExistingGoal = goalId.isNotBlank()
 
     val goalTitleRequester = remember { BringIntoViewRequester() }
     val targetAmountRequester = remember { BringIntoViewRequester() }
@@ -60,6 +67,10 @@ fun GoalFormScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(goalId) {
+        viewModel.loadGoalForForm(goalId)
+    }
 
     LaunchedEffect(
         uiState.shouldScrollToGoalTitle,
@@ -113,7 +124,7 @@ fun GoalFormScreen(
                 modifier = Modifier.padding(innerPadding)
             ) {
                 Text(
-                    text = "Create Goal",
+                    text = if (isEditingExistingGoal) "Update Goal" else "Create Goal",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -121,7 +132,11 @@ fun GoalFormScreen(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Create a savings goal and track your progress",
+                    text = if (isEditingExistingGoal) {
+                        "Edit, update, or delete this savings goal"
+                    } else {
+                        "Create a new savings goal and track progress"
+                    },
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -139,6 +154,7 @@ fun GoalFormScreen(
                             value = uiState.goalTitle,
                             onValueChange = viewModel::onGoalTitleChange,
                             label = { Text("Goal Title") },
+                            placeholder = { Text("Example: New laptop") },
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.Title,
@@ -163,6 +179,7 @@ fun GoalFormScreen(
                             value = uiState.targetAmount,
                             onValueChange = viewModel::onTargetAmountChange,
                             label = { Text("Target Amount") },
+                            placeholder = { Text("Example: 490000") },
                             prefix = { Text("LKR ") },
                             leadingIcon = {
                                 Icon(
@@ -191,6 +208,7 @@ fun GoalFormScreen(
                             value = uiState.currentSavedAmount,
                             onValueChange = viewModel::onCurrentSavedAmountChange,
                             label = { Text("Current Saved Amount") },
+                            placeholder = { Text("Example: 11200") },
                             prefix = { Text("LKR ") },
                             leadingIcon = {
                                 Icon(
@@ -205,7 +223,7 @@ fun GoalFormScreen(
                             isError = uiState.currentSavedAmountError,
                             supportingText = {
                                 if (uiState.currentSavedAmountError) {
-                                    Text("Please enter a valid saved amount")
+                                    Text("Saved amount must be valid and not exceed target")
                                 }
                             },
                             keyboardOptions = KeyboardOptions(
@@ -220,7 +238,7 @@ fun GoalFormScreen(
                             label = "Deadline",
                             placeholder = "Example: 2027-05-10",
                             isError = uiState.deadlineError,
-                            errorMessage = "Deadline cannot be empty",
+                            errorMessage = "Deadline cannot be empty or in the past",
                             onDateSelected = viewModel::onDeadlineChange,
                             modifier = Modifier.bringIntoViewRequester(deadlineRequester)
                         )
@@ -235,7 +253,7 @@ fun GoalFormScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        GoalStatusChips(
+                        GoalStatusChipRow(
                             selectedStatus = uiState.selectedGoalStatus,
                             onStatusSelected = viewModel::onGoalStatusChange
                         )
@@ -245,7 +263,7 @@ fun GoalFormScreen(
                         Button(
                             onClick = {
                                 focusManager.clearFocus()
-                                viewModel.saveGoal()
+                                viewModel.onSaveGoalClick()
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -258,10 +276,38 @@ fun GoalFormScreen(
                             Spacer(modifier = Modifier.size(8.dp))
 
                             Text(
-                                text = "Save Goal",
+                                text = if (isEditingExistingGoal) "Update Goal" else "Save Goal",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
+                        }
+
+                        if (isEditingExistingGoal) {
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            OutlinedButton(
+                                onClick = {
+                                    focusManager.clearFocus()
+                                    viewModel.onDeleteSelectedGoalClick()
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = Color(0xFFD32F2F)
+                                )
+
+                                Spacer(modifier = Modifier.size(8.dp))
+
+                                Text(
+                                    text = "Delete Goal",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFFD32F2F)
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -269,11 +315,7 @@ fun GoalFormScreen(
                         OutlinedButton(
                             onClick = {
                                 focusManager.clearFocus()
-                                viewModel.onGoalTitleChange("")
-                                viewModel.onTargetAmountChange("")
-                                viewModel.onCurrentSavedAmountChange("")
-                                viewModel.onDeadlineChange("")
-                                viewModel.onGoalStatusChange("Active")
+                                viewModel.onResetClick()
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -301,31 +343,63 @@ fun GoalFormScreen(
 }
 
 @Composable
-private fun GoalStatusChips(
+private fun GoalStatusChipRow(
     selectedStatus: String,
     onStatusSelected: (String) -> Unit
 ) {
-    Column {
-        FilterChip(
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        GoalStatusChip(
+            text = "Active",
             selected = selectedStatus == "Active",
+            selectedColor = MaterialTheme.colorScheme.primary,
             onClick = {
                 onStatusSelected("Active")
-            },
-            label = {
-                Text("Active")
             }
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        FilterChip(
-            selected = selectedStatus == "Paused",
+        GoalStatusChip(
+            text = "Pause",
+            selected = selectedStatus == "Pause",
+            selectedColor = Color(0xFFF9A825),
             onClick = {
-                onStatusSelected("Paused")
-            },
-            label = {
-                Text("Paused")
+                onStatusSelected("Pause")
+            }
+        )
+
+        GoalStatusChip(
+            text = "Completed",
+            selected = selectedStatus == "Completed",
+            selectedColor = MaterialTheme.colorScheme.secondary,
+            onClick = {
+                onStatusSelected("Completed")
             }
         )
     }
+}
+
+@Composable
+private fun GoalStatusChip(
+    text: String,
+    selected: Boolean,
+    selectedColor: Color,
+    onClick: () -> Unit
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = {
+            Text(
+                text = text,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium
+            )
+        },
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = selectedColor,
+            selectedLabelColor = Color.White
+        )
+    )
 }

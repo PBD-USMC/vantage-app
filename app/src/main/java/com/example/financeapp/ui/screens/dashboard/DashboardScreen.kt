@@ -358,6 +358,56 @@ private fun SectionHeader(
 }
 
 @Composable
+private fun SectionHeaderWithAction(
+    title: String,
+    icon: ImageVector,
+    actionText: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(22.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(modifier = Modifier.size(8.dp))
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = actionText,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
 private fun SavingsGoalCard(
     goalTitle: String,
     goalDeadlineLabel: String,
@@ -378,9 +428,10 @@ private fun SavingsGoalCard(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            SectionHeader(
+            SectionHeaderWithAction(
                 title = "Savings Goal",
-                icon = Icons.Default.Flag
+                icon = Icons.Default.Flag,
+                actionText = if (hasGoal) "View Goal" else "Create Goal"
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -404,7 +455,9 @@ private fun SavingsGoalCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Column {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
                         Text(
                             text = goalTitle,
                             fontSize = 16.sp,
@@ -591,9 +644,10 @@ private fun RecentTransactionsCard(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            SectionHeader(
+            SectionHeaderWithAction(
                 title = "Recent Transactions",
-                icon = Icons.Default.History
+                icon = Icons.Default.History,
+                actionText = "View All"
             )
 
             Spacer(modifier = Modifier.height(12.dp))

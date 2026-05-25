@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
 
 class IncomeViewModel : ViewModel() {
 
@@ -31,12 +33,10 @@ class IncomeViewModel : ViewModel() {
         "Variable",
         "Irregular",
         "Freelance",
-        "Crypto Gain",
-        "Crypto Loss"
+        "Crypto Gain"
     )
 
     val currencies = listOf(
-        "LKR",
         "USD",
         "EUR",
         "GBP",
@@ -58,6 +58,7 @@ class IncomeViewModel : ViewModel() {
                 it.copy(
                     amountReceived = newValue,
                     amountReceivedError = false,
+                    shouldScrollToAmount = false,
                     isSavedSuccessfully = false,
                     errorMessage = ""
                 )
@@ -98,7 +99,7 @@ class IncomeViewModel : ViewModel() {
     fun onCurrencyChange(newValue: String) {
         _uiState.update {
             it.copy(
-                currency = newValue.uppercase(),
+                currency = "LKR",
                 isSavedSuccessfully = false,
                 errorMessage = ""
             )
@@ -121,6 +122,7 @@ class IncomeViewModel : ViewModel() {
                 it.copy(
                     originalAmount = newValue,
                     originalAmountError = false,
+                    shouldScrollToOriginalAmount = false,
                     isSavedSuccessfully = false,
                     errorMessage = ""
                 )
@@ -159,6 +161,10 @@ class IncomeViewModel : ViewModel() {
                 it.copy(
                     amountReceivedError = isAmountInvalid,
                     originalAmountError = isOriginalAmountInvalid,
+
+                    shouldScrollToAmount = isAmountInvalid,
+                    shouldScrollToOriginalAmount = !isAmountInvalid && isOriginalAmountInvalid,
+
                     isSavedSuccessfully = false,
                     errorMessage = "Please enter valid income details."
                 )
@@ -169,11 +175,11 @@ class IncomeViewModel : ViewModel() {
         val income = Income(
             source = currentState.selectedIncomeSource,
             amount = parsedAmount,
-            currency = currentState.currency.ifBlank { "LKR" },
+            currency = "LKR",
             originalCurrency = currentState.originalCurrency.ifBlank { null },
             originalAmount = parsedOriginalAmount,
             incomeType = currentState.selectedIncomeType,
-            date = Timestamp.now(),
+            date = parseDateToTimestamp(currentState.dateReceived),
             note = currentState.note.trim(),
             createdAt = Timestamp.now()
         )
@@ -194,10 +200,16 @@ class IncomeViewModel : ViewModel() {
                     it.copy(
                         amountReceived = "",
                         amountReceivedError = false,
+                        dateReceived = "",
+                        currency = "LKR",
                         originalCurrency = "",
                         originalAmount = "",
                         originalAmountError = false,
                         note = "",
+
+                        shouldScrollToAmount = false,
+                        shouldScrollToOriginalAmount = false,
+
                         isLoading = false,
                         isSavedSuccessfully = true,
                         errorMessage = ""
@@ -261,8 +273,34 @@ class IncomeViewModel : ViewModel() {
         }
     }
 
+    fun clearScrollRequests() {
+        _uiState.update {
+            it.copy(
+                shouldScrollToAmount = false,
+                shouldScrollToOriginalAmount = false
+            )
+        }
+    }
+
     private fun isValidDecimalInput(value: String): Boolean {
         return value.all { it.isDigit() || it == '.' } &&
                 value.count { it == '.' } <= 1
+    }
+
+    private fun parseDateToTimestamp(dateText: String): Timestamp {
+        return try {
+            if (dateText.isBlank()) {
+                Timestamp.now()
+            } else {
+                val localDate = LocalDate.parse(dateText)
+                val instant = localDate
+                    .atStartOfDay(ZoneId.systemDefault())
+                    .toInstant()
+
+                Timestamp(instant.epochSecond, 0)
+            }
+        } catch (exception: Exception) {
+            Timestamp.now()
+        }
     }
 }

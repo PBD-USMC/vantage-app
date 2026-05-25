@@ -17,6 +17,8 @@ data class ExpenseUiState(
 
     val expenseList: List<Expense> = emptyList(),
 
+    val shouldScrollToAmount: Boolean = false,
+
     val isLoading: Boolean = false,
     val errorMessage: String = "",
     val isSavedSuccessfully: Boolean = false

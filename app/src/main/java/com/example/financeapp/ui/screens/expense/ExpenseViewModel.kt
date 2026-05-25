@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
 
 class ExpenseViewModel : ViewModel() {
 
@@ -20,12 +22,12 @@ class ExpenseViewModel : ViewModel() {
 
     val categories = listOf(
         "Food",
-        "Transport",
         "Rent",
-        "Utilities",
         "Subscriptions",
-        "Entertainment",
         "Shopping",
+        "Utilities",
+        "Transport",
+        "Entertainment",
         "Other"
     )
 
@@ -52,6 +54,7 @@ class ExpenseViewModel : ViewModel() {
                 it.copy(
                     amount = newValue,
                     amountError = false,
+                    shouldScrollToAmount = false,
                     isSavedSuccessfully = false,
                     errorMessage = ""
                 )
@@ -124,6 +127,7 @@ class ExpenseViewModel : ViewModel() {
             _uiState.update {
                 it.copy(
                     amountError = true,
+                    shouldScrollToAmount = true,
                     isSavedSuccessfully = false,
                     errorMessage = "Please enter a valid expense amount."
                 )
@@ -136,7 +140,7 @@ class ExpenseViewModel : ViewModel() {
             categoryName = currentState.selectedCategory,
             paymentMethod = currentState.selectedPaymentMethod,
             expenseType = currentState.selectedExpenseType,
-            date = Timestamp.now(),
+            date = parseDateToTimestamp(currentState.date),
             note = currentState.note.trim(),
             createdAt = Timestamp.now()
         )
@@ -157,7 +161,9 @@ class ExpenseViewModel : ViewModel() {
                     it.copy(
                         amount = "",
                         amountError = false,
+                        date = "",
                         note = "",
+                        shouldScrollToAmount = false,
                         isLoading = false,
                         isSavedSuccessfully = true,
                         errorMessage = ""
@@ -175,28 +181,27 @@ class ExpenseViewModel : ViewModel() {
                 }
             }
         }
-
     }
 
-        fun loadExpenses() {
-            viewModelScope.launch {
-                _uiState.update {
-                    it.copy(
-                        isLoading = true,
-                        errorMessage = ""
-                    )
-                }
+    fun loadExpenses() {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = ""
+                )
+            }
 
-                val expenses = financeRepository.getExpensesFromFirestore()
+            val expenses = financeRepository.getExpensesFromFirestore()
 
-                _uiState.update {
-                    it.copy(
-                        expenseList = expenses.sortedByDescending { expense -> expense.createdAt.seconds },
-                        isLoading = false
-                    )
-                }
+            _uiState.update {
+                it.copy(
+                    expenseList = expenses.sortedByDescending { expense -> expense.createdAt.seconds },
+                    isLoading = false
+                )
             }
         }
+    }
 
     fun deleteExpense(expenseId: String) {
         viewModelScope.launch {
@@ -222,9 +227,33 @@ class ExpenseViewModel : ViewModel() {
         }
     }
 
+    fun clearScrollRequests() {
+        _uiState.update {
+            it.copy(
+                shouldScrollToAmount = false
+            )
+        }
+    }
+
     private fun isValidDecimalInput(value: String): Boolean {
         return value.all { it.isDigit() || it == '.' } &&
                 value.count { it == '.' } <= 1
     }
 
+    private fun parseDateToTimestamp(dateText: String): Timestamp {
+        return try {
+            if (dateText.isBlank()) {
+                Timestamp.now()
+            } else {
+                val localDate = LocalDate.parse(dateText)
+                val instant = localDate
+                    .atStartOfDay(ZoneId.systemDefault())
+                    .toInstant()
+
+                Timestamp(instant.epochSecond, 0)
+            }
+        } catch (exception: Exception) {
+            Timestamp.now()
+        }
+    }
 }

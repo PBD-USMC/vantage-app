@@ -228,7 +228,7 @@ class FinanceRepository {
 
             activeGoalsSnapshot.documents.forEach { document ->
                 if (document.id != activeGoalId) {
-                    batch.update(document.reference, "status", "Paused")
+                    batch.update(document.reference, "status", "Pause")
                 }
             }
 

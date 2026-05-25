@@ -21,6 +21,9 @@ data class IncomeUiState(
 
     val incomeList: List<Income> = emptyList(),
 
+    val shouldScrollToAmount: Boolean = false,
+    val shouldScrollToOriginalAmount: Boolean = false,
+
     val isLoading: Boolean = false,
     val errorMessage: String = "",
     val isSavedSuccessfully: Boolean = false

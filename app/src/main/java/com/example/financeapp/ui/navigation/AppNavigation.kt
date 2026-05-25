@@ -1,9 +1,11 @@
 package com.example.financeapp.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.financeapp.ui.screens.auth.LoginScreen
 import com.example.financeapp.ui.screens.auth.RegisterScreen
 import com.example.financeapp.ui.screens.dashboard.DashboardScreen
@@ -21,6 +23,7 @@ sealed class Screen(val route: String) {
     object Expense : Screen("expense")
     object Goal : Screen("goal")
     object GoalForm : Screen("goal_form")
+    object GoalFormWithId : Screen("goal_form/{goalId}")
     object History : Screen("history")
 }
 
@@ -92,14 +95,33 @@ fun AppNavigation() {
                 onAddNewGoalClick = {
                     navController.navigate(Screen.GoalForm.route)
                 },
-                onGoalClick = {
-                    navController.navigate(Screen.GoalForm.route)
+                onGoalClick = { goalId ->
+                    navController.navigate("goal_form/$goalId")
                 }
             )
         }
 
         composable(Screen.GoalForm.route) {
             GoalFormScreen(
+                goalId = "",
+                onGoalSaved = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = Screen.GoalFormWithId.route,
+            arguments = listOf(
+                navArgument("goalId") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val goalId = backStackEntry.arguments?.getString("goalId") ?: ""
+
+            GoalFormScreen(
+                goalId = goalId,
                 onGoalSaved = {
                     navController.popBackStack()
                 }
