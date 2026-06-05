@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.financeapp.ui.screens.auth.ForgotPasswordScreen
 import com.example.financeapp.ui.screens.auth.LoginScreen
 import com.example.financeapp.ui.screens.auth.RegisterScreen
 import com.example.financeapp.ui.screens.dashboard.DashboardScreen
@@ -18,6 +19,7 @@ import com.example.financeapp.ui.screens.income.IncomeScreen
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")
+    object ForgotPassword : Screen("forgot_password")
     object Dashboard : Screen("dashboard")
     object Income : Screen("income")
     object Expense : Screen("expense")
@@ -46,6 +48,9 @@ fun AppNavigation() {
                 },
                 onCreateAccountClick = {
                     navController.navigate(Screen.Register.route)
+                },
+                onForgotPasswordClick = {
+                    navController.navigate(Screen.ForgotPassword.route)
                 }
             )
         }
@@ -60,6 +65,14 @@ fun AppNavigation() {
                     }
                 },
                 onLoginClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Screen.ForgotPassword.route) {
+            ForgotPasswordScreen(
+                onBackToLoginClick = {
                     navController.popBackStack()
                 }
             )

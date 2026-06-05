@@ -15,7 +15,10 @@ class AuthRepository {
         password: String
     ): Boolean {
         return try {
-            firebaseAuth.signInWithEmailAndPassword(email, password).await()
+            firebaseAuth
+                .signInWithEmailAndPassword(email, password)
+                .await()
+
             true
         } catch (exception: Exception) {
             false
@@ -52,8 +55,26 @@ class AuthRepository {
         }
     }
 
+    suspend fun sendPasswordResetEmail(
+        email: String
+    ): Boolean {
+        return try {
+            firebaseAuth
+                .sendPasswordResetEmail(email)
+                .await()
+
+            true
+        } catch (exception: Exception) {
+            false
+        }
+    }
+
     fun getCurrentUserId(): String? {
         return firebaseAuth.currentUser?.uid
+    }
+
+    fun getCurrentUserEmail(): String? {
+        return firebaseAuth.currentUser?.email
     }
 
     fun logoutUser() {

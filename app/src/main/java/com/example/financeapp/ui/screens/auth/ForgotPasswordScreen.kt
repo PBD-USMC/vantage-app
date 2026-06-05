@@ -3,7 +3,6 @@ package com.example.financeapp.ui.screens.auth
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -11,7 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.material.icons.filled.LockReset
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -22,14 +21,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,32 +34,23 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.financeapp.ui.components.ScreenContainer
 
 @Composable
-fun LoginScreen(
-    onLoginSuccess: () -> Unit = {},
-    onCreateAccountClick: () -> Unit = {},
-    onForgotPasswordClick: () -> Unit = {},
+fun ForgotPasswordScreen(
+    onBackToLoginClick: () -> Unit = {},
     viewModel: AuthViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    LaunchedEffect(uiState.isLoginSuccessful) {
-        if (uiState.isLoginSuccessful) {
-            viewModel.clearLoginSuccess()
-            onLoginSuccess()
-        }
-    }
 
     ScreenContainer(
         maxWidth = 420.dp,
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        AppLogo()
+        ForgotPasswordIcon()
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Smart Finance Manager",
+            text = "Reset Password",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
@@ -72,7 +60,7 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(10.dp))
 
         Text(
-            text = "Track income, spending, and savings goals clearly",
+            text = "Enter your registered email address. We will send you a password reset link.",
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center,
@@ -88,71 +76,23 @@ fun LoginScreen(
             androidx.compose.foundation.layout.Column(
                 modifier = Modifier.padding(20.dp)
             ) {
-                Text(
-                    text = "Login",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 OutlinedTextField(
                     value = uiState.email,
                     onValueChange = viewModel::onEmailChange,
                     label = { Text("Email") },
-                    placeholder = { Text("Enter your email") },
+                    placeholder = { Text("Enter your registered email") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     isError = uiState.emailError,
-                    supportingText = if (uiState.emailError) {
-                        {
+                    supportingText = {
+                        if (uiState.emailError) {
                             Text("Please enter a valid email address")
                         }
-                    } else {
-                        null
                     }
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = uiState.password,
-                    onValueChange = viewModel::onPasswordChange,
-                    label = { Text("Password") },
-                    placeholder = { Text("Enter your password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    isError = uiState.passwordError,
-                    supportingText = if (uiState.passwordError) {
-                        {
-                            Text("Password must be at least 6 characters")
-                        }
-                    } else {
-                        null
-                    }
-                )
-
-                TextButton(
-                    onClick = onForgotPasswordClick,
-                    enabled = !uiState.isLoading,
-                    modifier = Modifier
-                        .align(Alignment.End)
-                        .height(32.dp),
-                    contentPadding = PaddingValues(
-                        horizontal = 4.dp,
-                        vertical = 0.dp
-                    )
-                ) {
-                    Text(
-                        text = "Forgot password?",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
 
                 if (uiState.authErrorMessage.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
                         text = uiState.authErrorMessage,
@@ -162,10 +102,21 @@ fun LoginScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                if (uiState.authSuccessMessage.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = uiState.authSuccessMessage,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Button(
-                    onClick = viewModel::onLoginClick,
+                    onClick = viewModel::onForgotPasswordClick,
                     enabled = !uiState.isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -177,7 +128,7 @@ fun LoginScreen(
                         )
                     } else {
                         Text(
-                            text = "Login",
+                            text = "Send Reset Link",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -187,12 +138,15 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 TextButton(
-                    onClick = onCreateAccountClick,
+                    onClick = {
+                        viewModel.clearPasswordResetStatus()
+                        onBackToLoginClick()
+                    },
                     enabled = !uiState.isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "Create new account",
+                        text = "Back to Login",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -203,7 +157,7 @@ fun LoginScreen(
 }
 
 @Composable
-private fun AppLogo() {
+private fun ForgotPasswordIcon() {
     Box(
         modifier = Modifier
             .size(82.dp)
@@ -212,9 +166,9 @@ private fun AppLogo() {
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = Icons.Default.PieChart,
-            contentDescription = "Smart Finance Manager logo",
-            modifier = Modifier.size(62.dp),
+            imageVector = Icons.Default.LockReset,
+            contentDescription = "Reset password icon",
+            modifier = Modifier.size(58.dp),
             tint = MaterialTheme.colorScheme.primary
         )
     }
