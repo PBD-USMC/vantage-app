@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.Button
@@ -60,6 +61,7 @@ fun DashboardScreen(
     onExpenseClick: () -> Unit = {},
     onGoalClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
     viewModel: DashboardViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -86,7 +88,8 @@ fun DashboardScreen(
             monthLabel = uiState.monthLabel,
             onPreviousMonthClick = viewModel::onPreviousMonthClick,
             onNextMonthClick = viewModel::onNextMonthClick,
-            onCurrentMonthClick = viewModel::onCurrentMonthClick
+            onCurrentMonthClick = viewModel::onCurrentMonthClick,
+            onProfileClick = onProfileClick
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -140,7 +143,8 @@ private fun DashboardTopSection(
     monthLabel: String,
     onPreviousMonthClick: () -> Unit,
     onNextMonthClick: () -> Unit,
-    onCurrentMonthClick: () -> Unit
+    onCurrentMonthClick: () -> Unit,
+    onProfileClick: () -> Unit
 ) {
     Column {
         Row(
@@ -164,15 +168,30 @@ private fun DashboardTopSection(
                 )
             }
 
-            IconButton(
-                onClick = onCurrentMonthClick,
-                modifier = Modifier.size(48.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Today,
-                    contentDescription = "Current month",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                IconButton(
+                    onClick = onCurrentMonthClick,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Today,
+                        contentDescription = "Current month",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                IconButton(
+                    onClick = onProfileClick,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Account details",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
 
