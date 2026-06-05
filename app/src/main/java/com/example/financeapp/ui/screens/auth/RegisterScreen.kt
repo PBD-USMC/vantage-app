@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -101,10 +102,12 @@ fun RegisterScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     isError = uiState.nameError,
-                    supportingText = {
-                        if (uiState.nameError) {
+                    supportingText = if (uiState.nameError) {
+                        {
                             Text("Name cannot be empty")
                         }
+                    } else {
+                        null
                     }
                 )
 
@@ -118,10 +121,12 @@ fun RegisterScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     isError = uiState.emailError,
-                    supportingText = {
-                        if (uiState.emailError) {
+                    supportingText = if (uiState.emailError) {
+                        {
                             Text("Please enter a valid email address")
                         }
+                    } else {
+                        null
                     }
                 )
 
@@ -136,10 +141,12 @@ fun RegisterScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     isError = uiState.passwordError,
-                    supportingText = {
-                        if (uiState.passwordError) {
+                    supportingText = if (uiState.passwordError) {
+                        {
                             Text("Password must be at least 6 characters")
                         }
+                    } else {
+                        null
                     }
                 )
 
@@ -154,30 +161,53 @@ fun RegisterScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     isError = uiState.confirmPasswordError,
-                    supportingText = {
-                        if (uiState.confirmPasswordError) {
+                    supportingText = if (uiState.confirmPasswordError) {
+                        {
                             Text("Passwords do not match")
                         }
+                    } else {
+                        null
                     }
                 )
+
+                if (uiState.authErrorMessage.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = uiState.authErrorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Button(
                     onClick = viewModel::onRegisterClick,
+                    enabled = !uiState.isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "Create Account",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(22.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Text(
+                            text = "Create Account",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 TextButton(
                     onClick = onLoginClick,
+                    enabled = !uiState.isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(

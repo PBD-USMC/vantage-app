@@ -15,6 +15,7 @@ import com.example.financeapp.ui.screens.goal.GoalFormScreen
 import com.example.financeapp.ui.screens.goal.GoalScreen
 import com.example.financeapp.ui.screens.history.HistoryScreen
 import com.example.financeapp.ui.screens.income.IncomeScreen
+import com.example.financeapp.ui.screens.profile.ProfileScreen
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -27,6 +28,7 @@ sealed class Screen(val route: String) {
     object GoalForm : Screen("goal_form")
     object GoalFormWithId : Screen("goal_form/{goalId}")
     object History : Screen("history")
+    object Profile : Screen("profile")
 }
 
 @Composable
@@ -91,6 +93,9 @@ fun AppNavigation() {
                 },
                 onHistoryClick = {
                     navController.navigate(Screen.History.route)
+                },
+                onProfileClick = {
+                    navController.navigate(Screen.Profile.route)
                 }
             )
         }
@@ -143,6 +148,18 @@ fun AppNavigation() {
 
         composable(Screen.History.route) {
             HistoryScreen()
+        }
+
+        composable(Screen.Profile.route) {
+            ProfileScreen(
+                onLogoutClick = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Dashboard.route) {
+                            inclusive = true
+                        }
+                    }
+                }
+            )
         }
     }
 }

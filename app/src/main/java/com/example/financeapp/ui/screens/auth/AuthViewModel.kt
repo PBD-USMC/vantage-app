@@ -1,7 +1,8 @@
 package com.example.financeapp.ui.screens.auth
 
+import android.app.Application
 import android.util.Patterns
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financeapp.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,9 +11,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel(
+    application: Application
+) : AndroidViewModel(application) {
 
-    private val authRepository = AuthRepository()
+    private val authRepository = AuthRepository(
+        context = application.applicationContext
+    )
 
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
@@ -109,9 +114,9 @@ class AuthViewModel : ViewModel() {
                     isLoading = false,
                     emailError = false,
                     passwordError = false,
-                    authErrorMessage = if (loginResult) "" else "Invalid email or password",
+                    authErrorMessage = if (loginResult.isSuccessful) "" else loginResult.message,
                     authSuccessMessage = "",
-                    isLoginSuccessful = loginResult
+                    isLoginSuccessful = loginResult.isSuccessful
                 )
             }
         }
@@ -174,9 +179,9 @@ class AuthViewModel : ViewModel() {
                     emailError = false,
                     passwordError = false,
                     confirmPasswordError = false,
-                    authErrorMessage = if (registerResult) "" else "Registration failed. Try another email.",
+                    authErrorMessage = if (registerResult.isSuccessful) "" else registerResult.message,
                     authSuccessMessage = "",
-                    isRegisterSuccessful = registerResult
+                    isRegisterSuccessful = registerResult.isSuccessful
                 )
             }
         }
@@ -218,9 +223,9 @@ class AuthViewModel : ViewModel() {
             _uiState.update {
                 it.copy(
                     isLoading = false,
-                    authErrorMessage = if (resetResult) "" else "Failed to send reset email. Check the email address.",
-                    authSuccessMessage = if (resetResult) "Password reset email sent. Please check your inbox." else "",
-                    isPasswordResetEmailSent = resetResult
+                    authErrorMessage = if (resetResult.isSuccessful) "" else resetResult.message,
+                    authSuccessMessage = if (resetResult.isSuccessful) resetResult.message else "",
+                    isPasswordResetEmailSent = resetResult.isSuccessful
                 )
             }
         }
