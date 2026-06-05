@@ -1,7 +1,8 @@
 package com.example.financeapp.ui.screens.auth
 
+import android.app.Application
 import android.util.Patterns
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financeapp.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,9 +11,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel(
+    application: Application
+) : AndroidViewModel(application) {
 
-    private val authRepository = AuthRepository()
+    private val authRepository = AuthRepository(
+        context = application.applicationContext
+    )
 
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
@@ -23,6 +28,7 @@ class AuthViewModel : ViewModel() {
                 name = newValue,
                 nameError = false,
                 authErrorMessage = "",
+                authSuccessMessage = "",
                 isRegisterSuccessful = false
             )
         }
@@ -34,8 +40,10 @@ class AuthViewModel : ViewModel() {
                 email = newValue,
                 emailError = false,
                 authErrorMessage = "",
+                authSuccessMessage = "",
                 isLoginSuccessful = false,
-                isRegisterSuccessful = false
+                isRegisterSuccessful = false,
+                isPasswordResetEmailSent = false
             )
         }
     }
@@ -46,6 +54,7 @@ class AuthViewModel : ViewModel() {
                 password = newValue,
                 passwordError = false,
                 authErrorMessage = "",
+                authSuccessMessage = "",
                 isLoginSuccessful = false,
                 isRegisterSuccessful = false
             )
@@ -58,6 +67,7 @@ class AuthViewModel : ViewModel() {
                 confirmPassword = newValue,
                 confirmPasswordError = false,
                 authErrorMessage = "",
+                authSuccessMessage = "",
                 isRegisterSuccessful = false
             )
         }
@@ -78,6 +88,7 @@ class AuthViewModel : ViewModel() {
                     emailError = isEmailInvalid,
                     passwordError = isPasswordInvalid,
                     authErrorMessage = "",
+                    authSuccessMessage = "",
                     isLoginSuccessful = false
                 )
             }
@@ -85,17 +96,27 @@ class AuthViewModel : ViewModel() {
         }
 
         viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    authErrorMessage = "",
+                    authSuccessMessage = ""
+                )
+            }
+
             val loginResult = authRepository.loginUser(
-                email = currentState.email,
+                email = currentState.email.trim(),
                 password = currentState.password
             )
 
             _uiState.update {
                 it.copy(
+                    isLoading = false,
                     emailError = false,
                     passwordError = false,
-                    authErrorMessage = if (loginResult) "" else "Invalid email or password",
-                    isLoginSuccessful = loginResult
+                    authErrorMessage = if (loginResult.isSuccessful) "" else loginResult.message,
+                    authSuccessMessage = "",
+                    isLoginSuccessful = loginResult.isSuccessful
                 )
             }
         }
@@ -129,6 +150,7 @@ class AuthViewModel : ViewModel() {
                     passwordError = isPasswordInvalid,
                     confirmPasswordError = isConfirmPasswordInvalid,
                     authErrorMessage = "",
+                    authSuccessMessage = "",
                     isRegisterSuccessful = false
                 )
             }
@@ -136,20 +158,74 @@ class AuthViewModel : ViewModel() {
         }
 
         viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    authErrorMessage = "",
+                    authSuccessMessage = ""
+                )
+            }
+
             val registerResult = authRepository.registerUser(
-                name = currentState.name,
-                email = currentState.email,
+                name = currentState.name.trim(),
+                email = currentState.email.trim(),
                 password = currentState.password
             )
 
             _uiState.update {
                 it.copy(
+                    isLoading = false,
                     nameError = false,
                     emailError = false,
                     passwordError = false,
                     confirmPasswordError = false,
-                    authErrorMessage = if (registerResult) "" else "Registration failed. Try another email.",
-                    isRegisterSuccessful = registerResult
+                    authErrorMessage = if (registerResult.isSuccessful) "" else registerResult.message,
+                    authSuccessMessage = "",
+                    isRegisterSuccessful = registerResult.isSuccessful
+                )
+            }
+        }
+    }
+
+    fun onForgotPasswordClick() {
+        val currentState = _uiState.value
+
+        val isEmailInvalid = currentState.email.isBlank() ||
+                !Patterns.EMAIL_ADDRESS.matcher(currentState.email).matches()
+
+        if (isEmailInvalid) {
+            _uiState.update {
+                it.copy(
+                    emailError = true,
+                    authErrorMessage = "",
+                    authSuccessMessage = "",
+                    isPasswordResetEmailSent = false
+                )
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    emailError = false,
+                    authErrorMessage = "",
+                    authSuccessMessage = "",
+                    isPasswordResetEmailSent = false
+                )
+            }
+
+            val resetResult = authRepository.sendPasswordResetEmail(
+                email = currentState.email.trim()
+            )
+
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    authErrorMessage = if (resetResult.isSuccessful) "" else resetResult.message,
+                    authSuccessMessage = if (resetResult.isSuccessful) resetResult.message else "",
+                    isPasswordResetEmailSent = resetResult.isSuccessful
                 )
             }
         }
@@ -164,6 +240,16 @@ class AuthViewModel : ViewModel() {
     fun clearRegisterSuccess() {
         _uiState.update {
             it.copy(isRegisterSuccessful = false)
+        }
+    }
+
+    fun clearPasswordResetStatus() {
+        _uiState.update {
+            it.copy(
+                isPasswordResetEmailSent = false,
+                authSuccessMessage = "",
+                authErrorMessage = ""
+            )
         }
     }
 }

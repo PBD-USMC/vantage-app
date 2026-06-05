@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.financeapp.ui.screens.auth.ForgotPasswordScreen
 import com.example.financeapp.ui.screens.auth.LoginScreen
 import com.example.financeapp.ui.screens.auth.RegisterScreen
 import com.example.financeapp.ui.screens.dashboard.DashboardScreen
@@ -14,10 +15,12 @@ import com.example.financeapp.ui.screens.goal.GoalFormScreen
 import com.example.financeapp.ui.screens.goal.GoalScreen
 import com.example.financeapp.ui.screens.history.HistoryScreen
 import com.example.financeapp.ui.screens.income.IncomeScreen
+import com.example.financeapp.ui.screens.profile.ProfileScreen
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")
+    object ForgotPassword : Screen("forgot_password")
     object Dashboard : Screen("dashboard")
     object Income : Screen("income")
     object Expense : Screen("expense")
@@ -25,6 +28,7 @@ sealed class Screen(val route: String) {
     object GoalForm : Screen("goal_form")
     object GoalFormWithId : Screen("goal_form/{goalId}")
     object History : Screen("history")
+    object Profile : Screen("profile")
 }
 
 @Composable
@@ -46,6 +50,9 @@ fun AppNavigation() {
                 },
                 onCreateAccountClick = {
                     navController.navigate(Screen.Register.route)
+                },
+                onForgotPasswordClick = {
+                    navController.navigate(Screen.ForgotPassword.route)
                 }
             )
         }
@@ -65,6 +72,14 @@ fun AppNavigation() {
             )
         }
 
+        composable(Screen.ForgotPassword.route) {
+            ForgotPasswordScreen(
+                onBackToLoginClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable(Screen.Dashboard.route) {
             DashboardScreen(
                 onIncomeClick = {
@@ -78,6 +93,9 @@ fun AppNavigation() {
                 },
                 onHistoryClick = {
                     navController.navigate(Screen.History.route)
+                },
+                onProfileClick = {
+                    navController.navigate(Screen.Profile.route)
                 }
             )
         }
@@ -130,6 +148,18 @@ fun AppNavigation() {
 
         composable(Screen.History.route) {
             HistoryScreen()
+        }
+
+        composable(Screen.Profile.route) {
+            ProfileScreen(
+                onLogoutClick = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Dashboard.route) {
+                            inclusive = true
+                        }
+                    }
+                }
+            )
         }
     }
 }

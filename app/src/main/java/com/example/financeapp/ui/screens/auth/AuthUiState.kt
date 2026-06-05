@@ -14,7 +14,11 @@ data class AuthUiState(
     val confirmPasswordError: Boolean = false,
 
     val authErrorMessage: String = "",
+    val authSuccessMessage: String = "",
+
+    val isLoading: Boolean = false,
 
     val isLoginSuccessful: Boolean = false,
-    val isRegisterSuccessful: Boolean = false
+    val isRegisterSuccessful: Boolean = false,
+    val isPasswordResetEmailSent: Boolean = false
 )
